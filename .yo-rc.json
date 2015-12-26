@@ -1,0 +1,7 @@
+{
+  "generator-react-webpack": {
+    "appName": "reactStationboard",
+    "style": "less",
+    "postcss": true
+  }
+}
