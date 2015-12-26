@@ -4,10 +4,23 @@ require('styles/App.css');
 import React from 'react';
 
 var App = React.createClass({
+
+  handleStationChange: function(event) {
+    if(event.keyCode == 13){
+        this.setState({stationName: event.target.value});
+    }
+  },
+  getInitialState: function() {
+    return {
+      stationName: 'Zoo Zurich'
+    };
+  },
   render() {
     return (
       <div className="index">
-        <Station name={'Zoo Zuerich'} />
+        <h1>React Station Board</h1>
+        <input name="station-name" type="text" onKeyUp={this.handleStationChange}/>
+        <Station name={this.state.stationName} />
       </div>
     );
   }
@@ -28,18 +41,17 @@ var Station = React.createClass({
 
 var DepartureList = React.createClass({
 
-  pollInterval: 60*1000,
+  pollInterval: 5*1000,
 
-  loadDepartures: function() {
-    var component = this;
+  loadDepartures: function(stationName) {
     var request = require('superagent');
     request
-      .get('http://transport.opendata.ch/v1/stationboard?station=' + this.props.name + '&limit=15')
+      .get('http://transport.opendata.ch/v1/stationboard?station=' + (stationName || this.props.name) + '&limit=15')
       .end(function(err, res){
-          if(res.ok) {
-            component.setState({departures: res.body.stationboard});
-          }
-      });
+        if(res.ok && this.isMounted()) {
+          this.setState({departures: res.body.stationboard});
+        }
+      }.bind(this));
   },
 
   getInitialState: function() {
@@ -51,15 +63,19 @@ var DepartureList = React.createClass({
     setInterval(this.loadDepartures, this.pollInterval);
   },
 
+  componentWillReceiveProps: function(nextProps){
+    this.loadDepartures(nextProps.name);
+  },
+
   render() {
 
     var timeNow = (new Date()).getTime() / 1000;
-    var departuresNodes = this.state.departures.map(function(departure) {
+    var departuresNodes = this.state.departures.map(function(departure, i) {
 
       var diff = (departure.stop.departureTimestamp - timeNow)
 
       return (
-        <section>
+        <section key={i}>
           <h4>{departure.name} to {departure.to} in {Math.floor(diff / 60)}&#39;</h4>
         </section>
       );
@@ -68,6 +84,7 @@ var DepartureList = React.createClass({
     return (
       <section>
           <p>Next Departures:</p>
+          {this.props.name}
           {departuresNodes}
       </section>
     );

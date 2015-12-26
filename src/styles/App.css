@@ -4,3 +4,8 @@ body {
   background: #222;
   padding: 25px;
 }
+
+body input {
+  color: #222;
+  background-color: #DDD;
+}
